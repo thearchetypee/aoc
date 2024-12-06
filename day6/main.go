@@ -95,13 +95,8 @@ func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
 func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos Point) bool {
 	rows, cols := len(lab), len(lab[0])
 
-	newLab := make([][]rune, rows)
-	for i := range lab {
-		newLab[i] = make([]rune, cols)
-		copy(newLab[i], lab[i])
-	}
-
-	newLab[obstaclePos.y][obstaclePos.x] = '#'
+	originalValue := lab[obstaclePos.y][obstaclePos.x]
+	lab[obstaclePos.y][obstaclePos.x] = '#'
 
 	visited := make(map[State]bool)
 
@@ -111,6 +106,7 @@ func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos
 	for {
 		state := State{Point{x, y}, dir}
 		if visited[state] {
+			lab[obstaclePos.y][obstaclePos.x] = originalValue
 			return true
 		}
 		visited[state] = true
@@ -119,10 +115,11 @@ func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos
 		nextY := y + dy[dir]
 
 		if nextX < 0 || nextX >= cols || nextY < 0 || nextY >= rows {
+			lab[obstaclePos.y][obstaclePos.x] = originalValue
 			return false
 		}
 
-		if newLab[nextY][nextX] == '#' {
+		if lab[nextY][nextX] == '#' {
 			dir = (dir + 1) % 4
 		} else {
 			x, y = nextX, nextY
