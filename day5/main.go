@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type Rule struct {
+type rule struct {
 	before int
 	after  int
 }
 
-func parseRules(lines []string) ([]Rule, int) {
-	var rules []Rule
+func parseRules(lines []string) ([]rule, int) {
+	var rules []rule
 	rulesEndIndex := 0
 
 	for i, line := range lines {
@@ -24,7 +24,7 @@ func parseRules(lines []string) ([]Rule, int) {
 		parts := strings.Split(line, "|")
 		before, _ := strconv.Atoi(parts[0])
 		after, _ := strconv.Atoi(parts[1])
-		rules = append(rules, Rule{before: before, after: after})
+		rules = append(rules, rule{before: before, after: after})
 	}
 	return rules, rulesEndIndex
 }
@@ -39,7 +39,7 @@ func parseUpdate(line string) []int {
 	return update
 }
 
-func isValidOrder(update []int, rules []Rule) bool {
+func isValidOrder(update []int, rules []rule) bool {
 	positions := make(map[int]int)
 	for i, page := range update {
 		positions[page] = i
@@ -60,7 +60,7 @@ func getMiddlePage(update []int) int {
 	return update[len(update)/2]
 }
 
-func buildDependencyGraph(rules []Rule, pages []int) map[int][]int {
+func buildDependencyGraph(rules []rule, pages []int) map[int][]int {
 	graph := make(map[int][]int)
 	for _, page := range pages {
 		if _, exists := graph[page]; !exists {
@@ -113,7 +113,7 @@ func topologicalSort(graph map[int][]int) []int {
 	return order
 }
 
-func correctOrder(update []int, rules []Rule) []int {
+func correctOrder(update []int, rules []rule) []int {
 	graph := buildDependencyGraph(rules, update)
 	return topologicalSort(graph)
 }

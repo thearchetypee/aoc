@@ -7,21 +7,21 @@ import (
 )
 
 const (
-	UP = iota
-	RIGHT
-	DOWN
-	LEFT
+	up = iota
+	right
+	down
+	left
 )
 
 var dx = []int{0, 1, 0, -1}
 var dy = []int{-1, 0, 1, 0}
 
-type Point struct {
+type point struct {
 	x, y int
 }
 
-type State struct {
-	pos Point
+type state struct {
+	pos point
 	dir int
 }
 
@@ -31,11 +31,11 @@ func calculateDistinctPositions(lab [][]rune) int {
 	}
 	rows, cols := len(lab), len(lab[0])
 
-	visited := make(map[Point]bool)
+	visited := make(map[point]bool)
 
 	x, y, guardDirection := findGuardInitialPosition(lab, rows, cols)
 
-	visited[Point{x, y}] = true
+	visited[point{x, y}] = true
 
 	for {
 		nextX := x + dx[guardDirection]
@@ -49,7 +49,7 @@ func calculateDistinctPositions(lab [][]rune) int {
 			guardDirection = (guardDirection + 1) % 4
 		} else {
 			x, y = nextX, nextY
-			visited[Point{nextX, nextY}] = true
+			visited[point{nextX, nextY}] = true
 		}
 	}
 
@@ -57,7 +57,7 @@ func calculateDistinctPositions(lab [][]rune) int {
 }
 
 func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
-	i, j, direc := 0, 0, UP
+	i, j, direc := 0, 0, up
 	found := false
 	for x := 0; x < rows; x++ {
 		for y := 0; y < cols; y++ {
@@ -65,22 +65,22 @@ func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
 			case '^':
 				i = y
 				j = x
-				direc = UP
+				direc = up
 				found = true
 			case '>':
 				i = y
 				j = x
-				direc = RIGHT
+				direc = right
 				found = true
 			case 'v':
 				i = y
 				j = x
-				direc = DOWN
+				direc = down
 				found = true
 			case '<':
 				i = y
 				j = x
-				direc = LEFT
+				direc = left
 				found = true
 			}
 			if found {
@@ -92,19 +92,19 @@ func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
 	return i, j, direc
 }
 
-func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos Point) bool {
+func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos point) bool {
 	rows, cols := len(lab), len(lab[0])
 
 	originalValue := lab[obstaclePos.y][obstaclePos.x]
 	lab[obstaclePos.y][obstaclePos.x] = '#'
 
-	visited := make(map[State]bool)
+	visited := make(map[state]bool)
 
 	x, y := startX, startY
 	dir := startDir
 
 	for {
-		state := State{Point{x, y}, dir}
+		state := state{point{x, y}, dir}
 		if visited[state] {
 			lab[obstaclePos.y][obstaclePos.x] = originalValue
 			return true
@@ -145,7 +145,7 @@ func calculateLoopPositions(lab [][]rune) int {
 				continue
 			}
 
-			if tryObstaclePosition(lab, startX, startY, startDir, Point{x, y}) {
+			if tryObstaclePosition(lab, startX, startY, startDir, point{x, y}) {
 				loopCount++
 			}
 		}

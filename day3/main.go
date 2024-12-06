@@ -9,7 +9,7 @@ import (
 	"github.com/aoc2024/helper"
 )
 
-type Instruction struct {
+type instruction struct {
 	typ      string
 	position int
 	x, y     int
@@ -20,13 +20,13 @@ func processCorruptedMemory(input string, enabled bool) (int, bool) {
 	doPattern := regexp.MustCompile(`do\(\)`)
 	dontPattern := regexp.MustCompile(`don't\(\)`)
 
-	var instructions []Instruction
+	var instructions []instruction
 
 	mulMatches := mulPattern.FindAllStringSubmatchIndex(input, -1)
 	for _, match := range mulMatches {
 		x, _ := strconv.Atoi(input[match[2]:match[3]])
 		y, _ := strconv.Atoi(input[match[4]:match[5]])
-		instructions = append(instructions, Instruction{
+		instructions = append(instructions, instruction{
 			typ:      "mul",
 			position: match[0],
 			x:        x,
@@ -36,7 +36,7 @@ func processCorruptedMemory(input string, enabled bool) (int, bool) {
 
 	doMatches := doPattern.FindAllStringIndex(input, -1)
 	for _, match := range doMatches {
-		instructions = append(instructions, Instruction{
+		instructions = append(instructions, instruction{
 			typ:      "do",
 			position: match[0],
 		})
@@ -44,7 +44,7 @@ func processCorruptedMemory(input string, enabled bool) (int, bool) {
 
 	dontMatches := dontPattern.FindAllStringIndex(input, -1)
 	for _, match := range dontMatches {
-		instructions = append(instructions, Instruction{
+		instructions = append(instructions, instruction{
 			typ:      "dont",
 			position: match[0],
 		})
