@@ -25,16 +25,10 @@ type state struct {
 	dir int
 }
 
-func calculateDistinctPositions(lab [][]rune) int {
-	if len(lab) == 0 {
-		return 0
-	}
+func calculateDistinctPositions(lab [][]rune, startX, startY, startDir int) (int, map[point]bool) {
 	rows, cols := len(lab), len(lab[0])
-
 	visited := make(map[point]bool)
-
-	x, y, guardDirection := findGuardInitialPosition(lab, rows, cols)
-
+	x, y, guardDirection := startX, startY, startDir
 	visited[point{x, y}] = true
 
 	for {
@@ -53,10 +47,11 @@ func calculateDistinctPositions(lab [][]rune) int {
 		}
 	}
 
-	return len(visited)
+	return len(visited), visited
 }
 
-func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
+func findGuardInitialPosition(lab [][]rune) (int, int, int) {
+	rows, cols := len(lab), len(lab[0])
 	i, j, direc := 0, 0, up
 	found := false
 	for x := 0; x < rows; x++ {
@@ -95,9 +90,6 @@ func findGuardInitialPosition(lab [][]rune, rows, cols int) (int, int, int) {
 func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos point) bool {
 	rows, cols := len(lab), len(lab[0])
 
-	originalValue := lab[obstaclePos.y][obstaclePos.x]
-	lab[obstaclePos.y][obstaclePos.x] = '#'
-
 	visited := make(map[state]bool)
 
 	x, y := startX, startY
@@ -106,7 +98,6 @@ func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos
 	for {
 		state := state{point{x, y}, dir}
 		if visited[state] {
-			lab[obstaclePos.y][obstaclePos.x] = originalValue
 			return true
 		}
 		visited[state] = true
@@ -115,11 +106,13 @@ func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos
 		nextY := y + dy[dir]
 
 		if nextX < 0 || nextX >= cols || nextY < 0 || nextY >= rows {
-			lab[obstaclePos.y][obstaclePos.x] = originalValue
 			return false
 		}
 
-		if lab[nextY][nextX] == '#' {
+		isObstacle := lab[nextY][nextX] == '#' ||
+			(nextX == obstaclePos.x && nextY == obstaclePos.y)
+
+		if isObstacle {
 			dir = (dir + 1) % 4
 		} else {
 			x, y = nextX, nextY
@@ -127,26 +120,23 @@ func tryObstaclePosition(lab [][]rune, startX, startY, startDir int, obstaclePos
 	}
 }
 
-func calculateLoopPositions(lab [][]rune) int {
-	if len(lab) == 0 {
-		return 0
-	}
-
-	rows, cols := len(lab), len(lab[0])
-	startX, startY, startDir := findGuardInitialPosition(lab, rows, cols)
+func calculateLoopPositions(lab [][]rune, startX, startY, startDir int, path map[point]bool) int {
+	checkedPositions := make(map[point]bool)
 	loopCount := 0
 
-	for y := 0; y < rows; y++ {
-		for x := 0; x < cols; x++ {
-			if lab[y][x] != '.' {
-				continue
-			}
-			if x == startX && y == startY {
-				continue
-			}
-
-			if tryObstaclePosition(lab, startX, startY, startDir, point{x, y}) {
+	// Try putting obstacle only on the path visited.
+	// The worst case time is still same where guard have to visit every cell
+	for pos := range path {
+		if pos.x == startX && pos.y == startY {
+			continue
+		}
+		if lab[pos.y][pos.x] != '.' {
+			continue
+		}
+		if _, ok := checkedPositions[pos]; !ok {
+			if tryObstaclePosition(lab, startX, startY, startDir, pos) {
 				loopCount++
+				checkedPositions[pos] = true
 			}
 		}
 	}
@@ -165,8 +155,12 @@ func buildMatrix(input []string) [][]rune {
 func solve(input []string) (int, int) {
 	part1, part2 := 0, 0
 	lab := buildMatrix(input)
-	part1 = calculateDistinctPositions(lab)
-	part2 = calculateLoopPositions(lab)
+	if len(lab) == 0 {
+		return 0, 0
+	}
+	startX, startY, startDir := findGuardInitialPosition(lab)
+	part1, path := calculateDistinctPositions(lab, startX, startY, startDir)
+	part2 = calculateLoopPositions(lab, startX, startY, startDir, path)
 	return part1, part2
 }
 
