@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/aoc2024/helper"
 )
 
@@ -93,9 +95,17 @@ func getExtraPoints(p1, p2 point, maxX, maxY int) []point {
 	return points
 }
 
+func slope(p1, p2 point) (float64, float64) {
+	dx := float64(p2.x - p1.x)
+	dy := float64(p2.y - p1.y)
+	if dx == 0 {
+		return math.Inf(1), 0
+	}
+	return dy / dx, dx
+}
+
 func findAntinodesForPart2(group []antenna, maxX, maxY int) map[point]bool {
 	antinodes := make(map[point]bool)
-
 	if len(group) < 2 {
 		return antinodes
 	}
@@ -104,15 +114,33 @@ func findAntinodesForPart2(group []antenna, maxX, maxY int) map[point]bool {
 		antinodes[ant.pos] = true
 	}
 
-	for i := 0; i < len(group); i++ {
+	for i := 0; i < len(group)-1; i++ {
 		for j := i + 1; j < len(group); j++ {
 			ant1, ant2 := group[i], group[j]
+			m, dx := slope(ant1.pos, ant2.pos)
 
-			for y := 0; y < maxY; y++ {
+			if math.IsInf(m, 1) {
+				x := ant1.pos.x
+				for y := 0; y < maxY; y++ {
+					antinodes[point{x, y}] = true
+				}
+				continue
+			}
+
+			b := float64(ant1.pos.y) - m*float64(ant1.pos.x)
+
+			if dx > 0 {
 				for x := 0; x < maxX; x++ {
-					p := point{x, y}
-					if isCollinear(ant1.pos, ant2.pos, p) {
-						antinodes[p] = true
+					y := int(math.Round(m*float64(x) + b))
+					if y >= 0 && y < maxY {
+						antinodes[point{x, y}] = true
+					}
+				}
+			} else {
+				for x := maxX - 1; x >= 0; x-- {
+					y := int(math.Round(m*float64(x) + b))
+					if y >= 0 && y < maxY {
+						antinodes[point{x, y}] = true
 					}
 				}
 			}
@@ -120,6 +148,34 @@ func findAntinodesForPart2(group []antenna, maxX, maxY int) map[point]bool {
 	}
 	return antinodes
 }
+
+// func findAntinodesForPart2(group []antenna, maxX, maxY int) map[point]bool {
+// 	antinodes := make(map[point]bool)
+
+// 	if len(group) < 2 {
+// 		return antinodes
+// 	}
+
+// 	for _, ant := range group {
+// 		antinodes[ant.pos] = true
+// 	}
+
+// 	for i := 0; i < len(group); i++ {
+// 		for j := i + 1; j < len(group); j++ {
+// 			ant1, ant2 := group[i], group[j]
+
+// 			for y := 0; y < maxY; y++ {
+// 				for x := 0; x < maxX; x++ {
+// 					p := point{x, y}
+// 					if isCollinear(ant1.pos, ant2.pos, p) {
+// 						antinodes[p] = true
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return antinodes
+// }
 
 func findAntinodesP2(antennas []antenna, maxX, maxY int) map[point]bool {
 	antinodes := make(map[point]bool)
