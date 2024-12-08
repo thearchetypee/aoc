@@ -29,6 +29,32 @@ func findAntennas(input []string) []antenna {
 	return antennas
 }
 
+func findAntinodes(antennas []antenna, maxX, maxY int) map[point]bool {
+	antinodes := make(map[point]bool)
+	freqGroups := make(map[rune][]antenna)
+	for _, ant := range antennas {
+		freqGroups[ant.frequency] = append(freqGroups[ant.frequency], ant)
+	}
+
+	for _, group := range freqGroups {
+		for i := 0; i < len(group); i++ {
+			for j := i + 1; j < len(group); j++ {
+				ant1, ant2 := group[i], group[j]
+
+				linePoints := getExtraPoints(ant1.pos, ant2.pos, maxX, maxY)
+				for _, p := range linePoints {
+					d1 := distance(p, ant1.pos)
+					d2 := distance(p, ant2.pos)
+					if (d1 == 4*d2) || (d2 == 4*d1) {
+						antinodes[p] = true
+					}
+				}
+			}
+		}
+	}
+	return antinodes
+}
+
 func isCollinear(p1, p2, p3 point) bool {
 	x1, y1 := float64(p1.x), float64(p1.y)
 	x2, y2 := float64(p2.x), float64(p2.y)
@@ -43,34 +69,28 @@ func distance(p1, p2 point) float64 {
 	return dx*dx + dy*dy
 }
 
-func findAntinodes(antennas []antenna, maxX, maxY int) map[point]bool {
-	antinodes := make(map[point]bool)
-	freqGroups := make(map[rune][]antenna)
-	for _, ant := range antennas {
-		freqGroups[ant.frequency] = append(freqGroups[ant.frequency], ant)
+func getExtraPoints(p1, p2 point, maxX, maxY int) []point {
+	points := make([]point, 0)
+	dx := p2.x - p1.x
+	dy := p2.y - p1.y
+
+	if dx == 0 {
+		for y := 0; y < maxY; y++ {
+			points = append(points, point{p1.x, y})
+		}
+		return points
 	}
 
-	for _, group := range freqGroups {
-		for i := 0; i < len(group); i++ {
-			for j := i + 1; j < len(group); j++ {
-				ant1, ant2 := group[i], group[j]
-				for y := 0; y < maxY; y++ {
-					for x := 0; x < maxX; x++ {
-						p := point{x, y}
-						if !isCollinear(ant1.pos, ant2.pos, p) {
-							continue
-						}
-						d1 := distance(p, ant1.pos)
-						d2 := distance(p, ant2.pos)
-						if (d1 == 4*d2) || (d2 == 4*d1) {
-							antinodes[p] = true
-						}
-					}
-				}
-			}
+	slope := float64(dy) / float64(dx)
+	b := float64(p1.y) - slope*float64(p1.x)
+
+	for x := 0; x < maxX; x++ {
+		y := int(slope*float64(x) + b + 0.5)
+		if y >= 0 && y < maxY {
+			points = append(points, point{x, y})
 		}
 	}
-	return antinodes
+	return points
 }
 
 func findAntinodesForPart2(group []antenna, maxX, maxY int) map[point]bool {
@@ -123,14 +143,10 @@ func solve(input []string) (int, int) {
 	maxX := len(input[0])
 
 	antennas := findAntennas(input)
-
 	antinodesPart1 := findAntinodes(antennas, maxX, maxY)
-	part1 := len(antinodesPart1)
-
 	antinodesPart2 := findAntinodesP2(antennas, maxX, maxY)
-	part2 := len(antinodesPart2)
 
-	return part1, part2
+	return len(antinodesPart1), len(antinodesPart2)
 }
 
 func main() {
