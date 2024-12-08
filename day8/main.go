@@ -62,8 +62,29 @@ func distance(p1, p2 point) float64 {
 	return dx*dx + dy*dy
 }
 
+/**
+ Bresenham's Line-Drawing Algorithm:
+This is tricky part I used to optimise my algorithm. Instead of checking every
+position, I used the Bresenham algorithm tofind all the points that lie on the
+line between two given points. Let's understand this algorithm - Imagine you're
+drawing a line between two points on a pixel grid. At each step, you need to
+decide which pixel to color next. The key insight of Bresenham's algorithm is
+that it makes this decision using only integer arithmetic, avoiding the
+computationally expensive floating-point calculations typically required to
+determine the exact path of the line.
+**/
+
 func findPointsOnLine(p1, p2 point, maxX, maxY int) []point {
 	points := []point{}
+	/**
+		Vector Calculation: we calculate the direction vector between two points.
+		I can't add diagram here so think of it as the total horizontal and vertical
+		distances we need to cover.
+		  /|
+	     / | dy = y2-y1
+		/__|
+		dx = x2-x1
+		**/
 	dx := p2.x - p1.x
 	dy := p2.y - p1.y
 
@@ -71,10 +92,21 @@ func findPointsOnLine(p1, p2 point, maxX, maxY int) []point {
 		return []point{p1}
 	}
 
+	/**
+		The key mathematical insight is using GCD to find the smallest
+		possible step size. Why GCD? Consider a line from (0,0) to (6,4):
+			- Raw vector is (6,4)
+			- GCD(6,4) = 2
+			- Therefore minimal step vector is (3,2)
+			- This ensures we hit every possible integer point
+			  on the line(because we are dealing with matrix indexes)
+	**/
 	g := helper.Gcd(helper.Abs(dx), helper.Abs(dy))
 	stepX := dx / g
 	stepY := dy / g
 
+	// Now I traverse in both direction to get points on both side on the line.
+	// I don't want points outside matrix so I handled that too.
 	x, y := p1.x, p1.y
 	for x >= 0 && x < maxX && y >= 0 && y < maxY {
 		points = append(points, point{x, y})
