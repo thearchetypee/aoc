@@ -8,6 +8,10 @@ import (
 
 var directions = [][]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
 
+type State struct {
+	row, col, height int
+}
+
 func calculateTotalPaths(matrix [][]int) int {
 	rows, cols := len(matrix), len(matrix[0])
 	totalScore := 0
@@ -15,24 +19,36 @@ func calculateTotalPaths(matrix [][]int) int {
 	for k := range visited {
 		visited[k] = make([]bool, cols)
 	}
+	memo := make(map[State]map[string]bool)
+
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			if matrix[i][j] == 0 {
-				peakMap := make(map[string]bool)
 				visited[i][j] = true
-				exploreTrail(visited, matrix, i, j, rows, cols, 0, peakMap)
-				totalScore += len(peakMap)
+				peaks := exploreTrail(visited, matrix, i, j, rows, cols, 0, memo)
+				totalScore += len(peaks)
 			}
 		}
 	}
 	return totalScore
 }
 
-func exploreTrail(visited [][]bool, matrix [][]int, i, j, rows, cols, currentHeight int, peakMap map[string]bool) {
+func exploreTrail(visited [][]bool, matrix [][]int, i, j, rows, cols, currentHeight int, memo map[State]map[string]bool) map[string]bool {
+	currentState := State{i, j, currentHeight}
+	if cached, exists := memo[currentState]; exists {
+		result := make(map[string]bool)
+		for k, v := range cached {
+			result[k] = v
+		}
+		return result
+	}
+
+	peaks := make(map[string]bool)
 	if currentHeight == 9 {
 		key := fmt.Sprintf("%d,%d", i, j)
-		peakMap[key] = true
-		return
+		peaks[key] = true
+		memo[currentState] = peaks
+		return peaks
 	}
 
 	for _, dir := range directions {
@@ -47,9 +63,17 @@ func exploreTrail(visited [][]bool, matrix [][]int, i, j, rows, cols, currentHei
 		}
 
 		visited[newRow][newCol] = true
-		exploreTrail(visited, matrix, newRow, newCol, rows, cols, nextHeight, peakMap)
+		for peak := range exploreTrail(visited, matrix, newRow, newCol, rows, cols, nextHeight, memo) {
+			peaks[peak] = true
+		}
 		visited[newRow][newCol] = false
 	}
+
+	memo[currentState] = make(map[string]bool)
+	for k, v := range peaks {
+		memo[currentState][k] = v
+	}
+	return peaks
 }
 
 func buildMatrix(input []string) [][]int {
