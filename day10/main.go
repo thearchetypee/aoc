@@ -76,6 +76,58 @@ func exploreTrail(visited [][]bool, matrix [][]int, i, j, rows, cols, currentHei
 	return peaks
 }
 
+func countDistinctPaths(matrix [][]int) int {
+	rows, cols := len(matrix), len(matrix[0])
+	totalPaths := 0
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if matrix[i][j] == 0 {
+				visited := make([][]bool, rows)
+				for k := range visited {
+					visited[k] = make([]bool, cols)
+				}
+				memo := make(map[State]int)
+				visited[i][j] = true
+				paths := explorePaths(visited, matrix, i, j, rows, cols, 0, memo)
+				totalPaths += paths
+			}
+		}
+	}
+	return totalPaths
+}
+
+func explorePaths(visited [][]bool, matrix [][]int, i, j, rows, cols, currentHeight int, memo map[State]int) int {
+	currentState := State{i, j, currentHeight}
+	if val, exists := memo[currentState]; exists {
+		return val
+	}
+
+	if currentHeight == 9 {
+		return 1
+	}
+
+	totalPaths := 0
+	for _, dir := range directions {
+		newRow, newCol := i+dir[0], j+dir[1]
+		if newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols || visited[newRow][newCol] {
+			continue
+		}
+
+		nextHeight := matrix[newRow][newCol]
+		if nextHeight != currentHeight+1 {
+			continue
+		}
+
+		visited[newRow][newCol] = true
+		totalPaths += explorePaths(visited, matrix, newRow, newCol, rows, cols, nextHeight, memo)
+		visited[newRow][newCol] = false
+	}
+
+	memo[currentState] = totalPaths
+	return totalPaths
+}
+
 func buildMatrix(input []string) [][]int {
 	matrix := make([][]int, len(input))
 	for i, line := range input {
@@ -91,6 +143,7 @@ func solve(input []string) (int, int) {
 	part1, part2 := 0, 0
 	matrix := buildMatrix(input)
 	part1 = calculateTotalPaths(matrix)
+	part2 = countDistinctPaths(matrix)
 	return part1, part2
 }
 
