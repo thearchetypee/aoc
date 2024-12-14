@@ -27,3 +27,7 @@ func Abs64(x int64) int64 {
 	}
 	return x
 }
+
+func Mod(a, b int) int {
+	return ((a % b) + b) % b
+}
